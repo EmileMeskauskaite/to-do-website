@@ -70,10 +70,10 @@ router.post('/create_todo', async (req, res) => {
 });
 router.post('/register', async (req, res) => {
   try {
-    const { username, password,email, fullname, country } = req.body;
+    const { username, password,email, fullname, country, language } = req.body;
     
     // Sukuriame vartotoją su paprastu slaptažodžiu
-    const user = new User({ username, password, email, fullname, country });
+    const user = new User({ username, password, email, fullname, country, language });
 
     await user.save();
 

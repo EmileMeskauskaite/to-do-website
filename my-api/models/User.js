@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   username: String,
   email: String,
   country:String,
+  language:String,
   password: String,
   token: String,
   tasks: [taskSchema],  // Užduotys saugomos kaip masyvas
