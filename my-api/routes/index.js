@@ -70,10 +70,10 @@ router.post('/create_todo', async (req, res) => {
 });
 router.post('/register', async (req, res) => {
   try {
-    const { username, password,email, fullname } = req.body;
+    const { username, password,email, fullname, country } = req.body;
     
     // Sukuriame vartotoją su paprastu slaptažodžiu
-    const user = new User({ username, password, email, fullname });
+    const user = new User({ username, password, email, fullname, country });
 
     await user.save();
 
@@ -83,7 +83,6 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Failed to create user' });
   }
 });
-
 
 router.post('/login', async (req, res) => {
   try {
@@ -97,9 +96,24 @@ router.post('/login', async (req, res) => {
 
     // Patikriname, ar slaptažodis atitinka
     if (password === user.password) {
+      const today = new Date().toISOString().split('T')[0]; // Tik YYYY-MM-DD
+
+      // Atnaujiname aktyvumo statusą, `lastLogin` ir pridedame naują login datą į masyvą
+      user.activeStatus = true; 
+      user.lastLogin = today;
+      user.logins.push(today);
+
+      await user.save();
+
       res.json({
         message: 'Login successful',
-        user: { _id: user._id, username: user.username }
+        user: { 
+          _id: user._id, 
+          username: user.username, 
+          activeStatus: user.activeStatus, 
+          lastLogin: user.lastLogin,
+          logins: user.logins 
+        }
       });
     } else {
       return res.status(401).json({ error: 'Invalid username or password' });
@@ -110,37 +124,55 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
-
-
-router.delete('/delete_task/:id', async (req, res, next) => {
-  const taskId = req.params.id;
-  
-  if (!taskId) {
-    return res.status(400).json({ error: 'Task ID is required' });
-  }
-
+router.post('/logout/:userId', async (req, res) => {
   try {
-    // Find the user whose task needs to be deleted (assuming the task is part of the user's "tasks" array)
-    const user = await User.findOne({ 'tasks._id': taskId });
+    const { userId } = req.params;
+    const { activeStatus } = req.body;
 
+    // Ieškome vartotojo pagal userId
+    const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ error: 'User or task not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Remove the task from the user's tasks array
-    user.tasks = user.tasks.filter(task => task._id.toString() !== taskId);
+    // Atnaujiname activeStatus į false
+    user.activeStatus = activeStatus;
 
-    // Save the updated user document
     await user.save();
 
-    res.json({ message: 'Task deleted successfully' });
+    res.json({
+      message: 'Logout successful',
+    });
   } catch (err) {
-    console.error(err.message);
-    return res.status(500).json({ error: 'Failed to delete task' });
+    console.error(err);
+    return res.status(500).json({ error: 'Logout failed' });
   }
 });
 
+router.delete('/delete_task/:userId/:taskId', async (req, res) => {
+  console.log('DELETE request received:', req.params);
+  const { userId, taskId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const taskIndex = user.tasks.findIndex(task => task._id.toString() === taskId);
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    user.tasks.splice(taskIndex, 1);
+    await user.save();
+
+    res.json({ tasks: user.tasks });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
 
 
 module.exports = router;

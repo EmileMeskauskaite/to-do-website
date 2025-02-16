@@ -12,11 +12,13 @@ const userSchema = new mongoose.Schema({
   fullname: String,
   username: String,
   email: String,
+  country:String,
   password: String,
   token: String,
   tasks: [taskSchema],  // Užduotys saugomos kaip masyvas
-  lastlogin: String,
-  activestatus: Boolean,
+  logins: [String],      // Visos prisijungimo datos (YYYY-MM-DD)
+  lastLogin: String,     // Paskutinė prisijungimo data
+  activeStatus: Boolean, // Ar vartotojas prisijungęs
 });
 
 const User = mongoose.model('User', userSchema);

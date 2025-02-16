@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
+    "country-list-js": "^3.1.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
+    "react-select-country-list": "^2.2.3",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ToDoList from './ToDoList';
 
 export default function ToDoPage() {
@@ -8,7 +8,8 @@ export default function ToDoPage() {
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true); // Track loading state
   const userId = localStorage.getItem('userId');  // Get the userId from localStorage
-  
+  const navigate = useNavigate();
+
   // Ensure userId is available, if not redirect to login page
   useEffect(() => {
     if (!userId) {
@@ -64,6 +65,26 @@ export default function ToDoPage() {
     }
   }, [userId]); // Trigger when userId changes or is available
 
+  // Handle logout
+  const handleLogout = async () => {
+    // Send a request to set the active status to false on the server
+    const response = await fetch(`http://localhost:3000/logout/${userId}`, {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ activeStatus: false }),
+    });
+
+    if (response.ok) {
+      // Clear the userId from localStorage and redirect to login page
+      localStorage.removeItem('userId');
+      window.location.href = '/login-page';
+    } else {
+      console.error('Logout failed');
+    }
+  };
+
   return (
     <div className="container mt-5">
       <div className="row">
@@ -102,7 +123,7 @@ export default function ToDoPage() {
           )}
         </div>
       </div>
-      <Link to="/login-page" className="btn btn-primary" style={{ position: 'absolute', top: '10px', left: '10px' }}>Log out</Link>
+      <Link to="/login-page" className="btn btn-primary" onClick={handleLogout} style={{ position: 'absolute', top: '10px', left: '10px' }}>Log out</Link>
     </div>
   );
 }
