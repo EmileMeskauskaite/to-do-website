@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const taskSchema = new mongoose.Schema({
   task: String,
   description: String,
-  status: String,
+  status: { type: String, default: "In Progress" }, // Default status
+  createdDate: { type: Date, default: Date.now },
 });
 
 // Sukuriame vartotojo modelį su užduotimis kaip vidiniu masyvu

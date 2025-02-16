@@ -41,33 +41,31 @@ router.get('/to-do-page/:id', async (req, res) => {
   }
 });
 
-router.post('/create_todo', async (req, res) => {
+router.post("/create_todo", async (req, res) => {
   try {
     const { userId, task, description, status } = req.body;
 
     const user = await User.findById(userId);
-
     if (!user) {
-      return res.status(400).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    // Sukurkite užduotį
     const newTask = {
       task,
       description,
-      status
+      status: status || "In Progress", // Default to "In Progress"
     };
 
-    // Pridėkite užduotį į vartotojo tasks masyvą
     user.tasks.push(newTask);
+    await user.save();
 
-    await user.save();  // Išsaugokite vartotojo dokumentą su nauja užduotimi
-    res.status(201).json({ message: 'Task created successfully', task: newTask });
+    res.status(201).json({ message: "Task created successfully", task: newTask });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to create task' });
+    res.status(500).json({ error: "Failed to create task" });
   }
 });
+
 router.post('/register', async (req, res) => {
   try {
     const { username, password,email, fullname, country, language } = req.body;
@@ -171,6 +169,36 @@ router.delete('/delete_task/:userId/:taskId', async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
+router.put('/update_task_status/:userId/:taskId', async (req, res) => {
+  const { userId, taskId } = req.params;
+  const { newStatus } = req.body;
+
+  try {
+    // Fetch the user by userId
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find the task by taskId
+    const task = user.tasks.id(taskId); // Find task by its _id within the user's tasks
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Update the status
+    task.status = newStatus || task.status; // Update status or retain current status if not provided
+
+    // Save the updated user document
+    await user.save();
+
+    // Respond with the updated task data
+    res.json({ message: 'Task status updated successfully', task });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to update task status' });
   }
 });
 

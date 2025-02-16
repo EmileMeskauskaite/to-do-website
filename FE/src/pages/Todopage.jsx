@@ -6,14 +6,14 @@ export default function ToDoPage() {
   const [tasks, setTasks] = useState([]);
   const [task, settask] = useState('');
   const [description, setDescription] = useState('');
-  const [isLoading, setIsLoading] = useState(true); // Track loading state
-  const userId = localStorage.getItem('userId');  // Get the userId from localStorage
+  const [status, setStatus] = useState('In Progress');
+  const [isLoading, setIsLoading] = useState(true); 
+  const userId = localStorage.getItem('userId'); 
   const navigate = useNavigate();
 
-  // Ensure userId is available, if not redirect to login page
   useEffect(() => {
     if (!userId) {
-      window.location.href = "/login-page"; // Redirect to login if no userId found in localStorage
+      window.location.href = "/login-page";
     }
   }, [userId]);
 
@@ -29,14 +29,13 @@ export default function ToDoPage() {
 
     if (response.ok) {
       const todos = await response.json();
-      setTasks(todos); // Update state with tasks
-      setIsLoading(false); // Set loading state to false once the tasks are loaded
+      setTasks(todos);
+      setIsLoading(false);
     } else {
       console.error('Failed to fetch todos', response.status);
     }
   };
 
-  // Handle task creation
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!task.trim() || !description.trim()) return;
@@ -46,30 +45,28 @@ export default function ToDoPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ task, description, userId }),
+      body: JSON.stringify({ task, description, userId, status }),
     });
 
     if (response.ok) {
-      await getToDoList(); // Refresh the task list
+      await getToDoList();
       settask('');
       setDescription('');
+      setStatus('In Progress');
     } else {
       console.error('Failed to create task');
     }
   };
 
-  // Load tasks when userId is available
   useEffect(() => {
     if (userId) {
       getToDoList();
     }
-  }, [userId]); // Trigger when userId changes or is available
+  }, [userId]);
 
-  // Handle logout
   const handleLogout = async () => {
-    // Send a request to set the active status to false on the server
     const response = await fetch(`http://localhost:3000/logout/${userId}`, {
-      method: 'POST', 
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -77,7 +74,6 @@ export default function ToDoPage() {
     });
 
     if (response.ok) {
-      // Clear the userId from localStorage and redirect to login page
       localStorage.removeItem('userId');
       window.location.href = '/login-page';
     } else {
@@ -90,7 +86,6 @@ export default function ToDoPage() {
       <div className="row">
         <div className="col-md-6">
           <h2>To-Do List</h2>
-          {/* Form for adding tasks */}
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label htmlFor="task" className="form-label">Task</label>
@@ -111,15 +106,29 @@ export default function ToDoPage() {
                 onChange={(e) => setDescription(e.target.value)} 
               ></textarea>
             </div>
+            <div className="mb-3">
+              <label htmlFor="status" className="form-label">Status</label>
+              <select 
+                id="status" 
+                className="form-control" 
+                value={status} 
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+                <option value="On Wait">On Wait</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
             <button type="submit" className="btn btn-primary">Add Task</button>
           </form>
         </div>
         <div className="col-md-6">
           <h2>Tasks</h2>
           {isLoading ? (
-            <p>Loading tasks...</p> // Show loading message until tasks are fetched
+            <p>Loading tasks...</p>
           ) : (
-            <ToDoList tasks={tasks} getToDoList={getToDoList} /> // Pass tasks and getToDoList to ToDoList
+            <ToDoList tasks={tasks} getToDoList={getToDoList} />
           )}
         </div>
       </div>
