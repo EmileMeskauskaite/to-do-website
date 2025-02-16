@@ -50,10 +50,15 @@ router.post("/create_todo", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Get today's date in MM/DD/YYYY format
+    const today = new Date();
+    const formattedDate = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+
     const newTask = {
       task,
       description,
       status: status || "In Progress", // Default to "In Progress"
+      createdAt: formattedDate, // Store the date in MM/DD/YYYY format
     };
 
     user.tasks.push(newTask);
@@ -65,6 +70,8 @@ router.post("/create_todo", async (req, res) => {
     res.status(500).json({ error: "Failed to create task" });
   }
 });
+
+
 
 router.post('/register', async (req, res) => {
   try {
@@ -171,36 +178,33 @@ router.delete('/delete_task/:userId/:taskId', async (req, res) => {
     return res.status(500).json({ error: 'Failed to delete task' });
   }
 });
-router.put('/update_task_status/:userId/:taskId', async (req, res) => {
-  const { userId, taskId } = req.params;
-  const { newStatus } = req.body;
-
+router.put("/update_task_status/:userId/:taskId", async (req, res) => {
   try {
-    // Fetch the user by userId
+    const { userId, taskId } = req.params;
+    const { status } = req.body;
+
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    // Find the task by taskId
-    const task = user.tasks.id(taskId); // Find task by its _id within the user's tasks
+    // Ieškome užduoties pagal taskId
+    const task = user.tasks.find(t => t._id.toString() === taskId);
     if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
+      return res.status(404).json({ error: "Task not found" });
     }
 
-    // Update the status
-    task.status = newStatus || task.status; // Update status or retain current status if not provided
-
-    // Save the updated user document
+    // Atnaujiname užduoties statusą
+    task.status = status;
     await user.save();
 
-    // Respond with the updated task data
-    res.json({ message: 'Task status updated successfully', task });
+    res.status(200).json({ message: "Task status updated successfully", task });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Failed to update task status' });
+    res.status(500).json({ error: "Failed to update task status" });
   }
 });
+
 
 
 module.exports = router;
