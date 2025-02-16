@@ -1,65 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React from 'react';
 
-export default function ToDoList() {
-  const [tasks, setTasks] = useState([])
-  const location = useLocation();
-  const userId = location.state?.userId;
+export default function ToDoList({ tasks, getToDoList }) {
 
-  async function getToDoList() {
-    // Patikriname, ar userId yra pasiekiamas
-    if (!userId) {
-      console.error('User ID is not available');
+  // Handle delete
+  const handleDelete = async (id) => {
+    const token = localStorage.getItem('token'); // Get the token from localStorage
+
+    if (!token) {
+      console.error('No token found');
       return;
     }
-  
-    const response = await fetch(`http://localhost:3000/to-do-page/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'no-cache',  // Prevent caching
-        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Jei naudojate token'ą, kad autentifikuotumėte vartotoją
-      },
-    });
-  
-    if (response.ok) {
-      const todos = await response.json();
-      console.log(todos); // Patikrinkite duomenis
-      setTasks(todos); // Atnaujinkite būseną su gautais to-dos
-    } else {
-      console.error('Failed to fetch todos', response.status);
-    }
-  }
-  
-  async function handleDelete(id) {
+
     const response = await fetch(`http://localhost:3000/delete_task/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': localStorage.getItem('token')
+        'Authorization': `Bearer ${token}`, // Pass token in the Authorization header
       }
     });
-  
+
     if (response.ok) {
-      setTasks(tasks.filter(task => task.id !== id));
+      getToDoList(); // Refresh the task list after deletion
     } else {
       console.error('Failed to delete task');
     }
-  }
-  useEffect(() => {
-    getToDoList();
-  }, []);
+  };
 
   return (
     <div className="container">
-      {tasks.map(task => (
-        <li key={task.id} className="list-group-item d-flex justify-content-between align-items-center">
-          <div>
-            <h5>{task.task}</h5>
-            <p>{task.description}</p>
-            {/* Button to delete task */}
-            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(task.id)}>Delete</button>
-          </div>
-        </li>
-      ))}
+      <ul className="list-group">
+        {tasks.map(task => (
+          <li key={task._id} className="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <h5>{task.task}</h5>
+              <p>{task.description}</p>
+              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(task._id)}>
+                Delete
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

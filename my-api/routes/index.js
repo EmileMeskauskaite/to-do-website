@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 
@@ -14,6 +13,7 @@ router.get('/', function(req, res, next) {
     res.json(rows);
   });
 });
+
 router.get('/to-do-page/:id', async (req, res) => {
   try {
     const userId = req.params.id;
@@ -70,10 +70,10 @@ router.post('/create_todo', async (req, res) => {
 });
 router.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password,email, fullname } = req.body;
     
     // Sukuriame vartotoją su paprastu slaptažodžiu
-    const user = new User({ username, password });
+    const user = new User({ username, password, email, fullname });
 
     await user.save();
 
@@ -112,34 +112,33 @@ router.post('/login', async (req, res) => {
 
 
 
-function verifyToken(req, res, next) {
-  let token =  req.headers['x-access-token'] || req.headers['authorization'];
+
+router.delete('/delete_task/:id', async (req, res, next) => {
+  const taskId = req.params.id;
   
-  if (!token) {
-    return res.status(403).json({ error: 'No token provided' });
+  if (!taskId) {
+    return res.status(400).json({ error: 'Task ID is required' });
   }
 
-  jwt.verify(token, secretKey, function(err, decoded) {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to authenticate token' });
+  try {
+    // Find the user whose task needs to be deleted (assuming the task is part of the user's "tasks" array)
+    const user = await User.findOne({ 'tasks._id': taskId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User or task not found' });
     }
 
-    // If the token is valid, save the decoded token to the request for later use
-    req.decoded = decoded;
-    next();
-  });
-}
-router.delete('/delete_task/:id', verifyToken, function(req, res, next) {
-  let db = new sqlite3.Database('./database.db');
-  let id = req.params.id;
+    // Remove the task from the user's tasks array
+    user.tasks = user.tasks.filter(task => task._id.toString() !== taskId);
 
-  db.run(`DELETE FROM todolist WHERE id = ?`, [id], function(err) {
-    if (err) {
-      return console.log(err.message);
-    }
+    // Save the updated user document
+    await user.save();
+
     res.json({ message: 'Task deleted successfully' });
-    db.close();
-  });
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ error: 'Failed to delete task' });
+  }
 });
 
 

@@ -17,6 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Route path='/register-page' element={<Registerpage />} />
       <Route path='/login-page' element={<Loginpage />} />
       <Route path='/to-do-page' element={<Todopage />} />
+      <Route path="/" element={<Mainpage />} />
 
       <Route path="*" element={<div> Puslapio nera! </div>} />
     </Routes>

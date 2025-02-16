@@ -23,7 +23,8 @@ export default function LoginPage() {
       const userId = data.user._id;  // Dabar teisingai gauname userId iš user objekto
   
       // Įrašykite userId į localStorage
-      localStorage.setItem('userId', userId); // Panaudokite userId, ne token, jei reikia
+      localStorage.setItem('userId', userId); 
+
   
       setUsername("");
       setPassword("");

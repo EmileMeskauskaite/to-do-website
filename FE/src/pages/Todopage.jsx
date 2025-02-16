@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import ToDoList from './ToDoList';
 import { Link } from 'react-router-dom';
+import ToDoList from './ToDoList';
 
 export default function ToDoPage() {
   const [tasks, setTasks] = useState([]);
   const [task, settask] = useState('');
   const [description, setDescription] = useState('');
-  
+  const [isLoading, setIsLoading] = useState(true); // Track loading state
   const userId = localStorage.getItem('userId');  // Get the userId from localStorage
-  console.log(userId);
+  
   // Ensure userId is available, if not redirect to login page
   useEffect(() => {
     if (!userId) {
@@ -16,28 +16,53 @@ export default function ToDoPage() {
     }
   }, [userId]);
 
+  // Function to get tasks
+  const getToDoList = async () => {
+    if (!userId) return;
+    const response = await fetch(`http://localhost:3000/to-do-page/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+
+    if (response.ok) {
+      const todos = await response.json();
+      setTasks(todos); // Update state with tasks
+      setIsLoading(false); // Set loading state to false once the tasks are loaded
+    } else {
+      console.error('Failed to fetch todos', response.status);
+    }
+  };
+
+  // Handle task creation
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!task.trim() || !description.trim()) return;
-  
+
     const response = await fetch('http://localhost:3000/create_todo', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ task, description, userId })
+      body: JSON.stringify({ task, description, userId }),
     });
-  
+
     if (response.ok) {
-      const newTask = await response.json();
-      setTasks([...tasks, newTask]);
-  
+      await getToDoList(); // Refresh the task list
       settask('');
       setDescription('');
+    } else {
+      console.error('Failed to create task');
     }
   };
-  console.log({ task, description, userId });
-  
+
+  // Load tasks when userId is available
+  useEffect(() => {
+    if (userId) {
+      getToDoList();
+    }
+  }, [userId]); // Trigger when userId changes or is available
 
   return (
     <div className="container mt-5">
@@ -47,7 +72,7 @@ export default function ToDoPage() {
           {/* Form for adding tasks */}
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label htmlFor="task" className="form-label">task</label>
+              <label htmlFor="task" className="form-label">Task</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -70,9 +95,11 @@ export default function ToDoPage() {
         </div>
         <div className="col-md-6">
           <h2>Tasks</h2>
-          <ul className="list-group">
-            <ToDoList />
-          </ul>
+          {isLoading ? (
+            <p>Loading tasks...</p> // Show loading message until tasks are fetched
+          ) : (
+            <ToDoList tasks={tasks} getToDoList={getToDoList} /> // Pass tasks and getToDoList to ToDoList
+          )}
         </div>
       </div>
       <Link to="/login-page" className="btn btn-primary" style={{ position: 'absolute', top: '10px', left: '10px' }}>Log out</Link>

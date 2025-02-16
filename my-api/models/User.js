@@ -9,7 +9,7 @@ const taskSchema = new mongoose.Schema({
 
 // Sukuriame vartotojo modelį su užduotimis kaip vidiniu masyvu
 const userSchema = new mongoose.Schema({
-  full_name: String,
+  fullname: String,
   username: String,
   email: String,
   password: String,

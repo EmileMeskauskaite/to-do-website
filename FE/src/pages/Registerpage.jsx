@@ -6,7 +6,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [fullname, setfullname] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (event) => {
@@ -28,7 +28,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!fullName) {
+    if (!fullname) {
       alert('Please enter your full name.');
       return;
     }
@@ -39,7 +39,7 @@ export default function RegisterPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, password, email, fullName }),
+      body: JSON.stringify({ username, password, email, fullname }),
     });
 
     if (response.ok) {
@@ -47,7 +47,7 @@ export default function RegisterPage() {
       setUsername("");
       setPassword("");
       setEmail("");
-      setFullName("");
+      setfullname("");
       setMessage("Registration successful!");
     } else {
       // Show an error message if registration fails
@@ -68,8 +68,8 @@ export default function RegisterPage() {
             <h2>Register</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label htmlFor="fullName" className="form-label">Full Name</label>
-                <input type="text" className="form-control" id="fullName" name="fullName" value={fullName} onChange={e => setFullName(e.target.value)} />
+                <label htmlFor="fullname" className="form-label">Full Name</label>
+                <input type="text" className="form-control" id="fullname" name="fullname" value={fullname} onChange={e => setfullname(e.target.value)} />
               </div>
             <div className="mb-3">
               <label htmlFor="email" className="form-label">Email</label>
