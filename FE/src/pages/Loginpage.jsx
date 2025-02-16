@@ -10,28 +10,26 @@ export default function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
   
-    const loginTime = new Date().toISOString(); // Fiksuojame prisijungimo laiką
+    const loginTime = new Date().toISOString();
   
     const response = await fetch('http://localhost:3000/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username, password, activeStatus: true, loginTime }) // Siunčiame papildomus duomenis
+      body: JSON.stringify({ username, password, activeStatus: true, loginTime }) 
     });
   
     if (response.ok) {
       const data = await response.json();
       const userId = data.user._id;
   
-      // Įrašome userId į localStorage
       localStorage.setItem('userId', userId);
   
       setUsername("");
       setPassword("");
       setMessage("Login successful!");
   
-      // Peradresuojame su userId
       navigate('/to-do-page', { state: { userId } });
     } else {
       setMessage("Login failed.");

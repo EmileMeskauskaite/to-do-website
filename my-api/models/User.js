@@ -4,9 +4,16 @@ const mongoose = require('mongoose');
 const taskSchema = new mongoose.Schema({
   task: String,
   description: String,
-  status: { type: String, default: "In Progress" }, // Default status
-  createdDate: { type: Date, default: Date.now },
+  status: { type: String, default: "In Progress" },
+  createdDate: { 
+    type: String, 
+    default: () => {
+      const today = new Date();
+      return `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+    }
+  },
 });
+
 
 // Sukuriame vartotojo modelį su užduotimis kaip vidiniu masyvu
 const userSchema = new mongoose.Schema({

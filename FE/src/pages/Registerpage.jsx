@@ -143,7 +143,7 @@ export default function RegisterPage() {
           </form>
           <div className="mt-3">{message}</div>
         </div>
-      </div>
+      </div> 
     </div>
   );
 }
