@@ -17,27 +17,26 @@ export default function LoginPage() {
       },
       body: JSON.stringify({ username, password })
     });
-    
+  
     if (response.ok) {
       const data = await response.json();
-      const token = data.token;
-    
-      //console.log('Response status:', response.status);
-      //console.log('Response data:', data);
-      //console.log('User ID:', data.user.id);    
-      localStorage.setItem('token', token); 
-   
-
+      const userId = data.user._id;  // Dabar teisingai gauname userId iš user objekto
+  
+      // Įrašykite userId į localStorage
+      localStorage.setItem('userId', userId); // Panaudokite userId, ne token, jei reikia
+  
       setUsername("");
       setPassword("");
       setMessage("Login successful!");
-    
-      // Navigate to TodoPage with user's ID as state
-      navigate('/to-do-page', { state: { userId: data.user.id } });
+  
+      // Peradresuokite su userId
+      navigate('/to-do-page', { state: { userId: userId } });
     } else {
       setMessage("Login failed.");
     }
   };
+  
+  
 
   return (
     <div className="container mt-5">
@@ -52,11 +51,25 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label htmlFor="username" className="form-label">Username</label>
-              <input type="text" className="form-control" id="username" name="username" value={username} onChange={e => setUsername(e.target.value)} />
+              <input
+                type="text"
+                className="form-control"
+                id="username"
+                name="username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+              />
             </div>
             <div className="mb-3">
               <label htmlFor="password" className="form-label">Password</label>
-              <input type="password" className="form-control" id="password" name="password" value={password} onChange={e => setPassword(e.target.value)} />
+              <input
+                type="password"
+                className="form-control"
+                id="password"
+                name="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
             </div>
             <button type="submit" className="btn btn-primary">Login</button>
           </form>

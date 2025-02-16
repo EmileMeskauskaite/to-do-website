@@ -32,15 +32,17 @@ export default function RegisterPage() {
       alert('Please enter your full name.');
       return;
     }
+
+    // Make the POST request to the backend with the user data
     const response = await fetch('http://localhost:3000/register', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, password, email, fullName })
+      body: JSON.stringify({ username, password, email, fullName }),
     });
 
-    if (response.ok) { // Check if HTTP status is 2xx
+    if (response.ok) {
       const data = await response.json();
       setUsername("");
       setPassword("");
@@ -48,7 +50,9 @@ export default function RegisterPage() {
       setFullName("");
       setMessage("Registration successful!");
     } else {
-      setMessage("Registration failed.");
+      // Show an error message if registration fails
+      const errorData = await response.json();
+      setMessage(`Registration failed: ${errorData.error || 'Unknown error'}`);
     }
   };
 

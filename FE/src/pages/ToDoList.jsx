@@ -7,10 +7,27 @@ export default function ToDoList() {
   const userId = location.state?.userId;
 
   async function getToDoList() {
-    const response = await fetch(`http://localhost:3000/to-do-page/${userId}`);
-    const todos = await response.json();
-    console.log(todos); 
-    setTasks(todos);
+    // Patikriname, ar userId yra pasiekiamas
+    if (!userId) {
+      console.error('User ID is not available');
+      return;
+    }
+  
+    const response = await fetch(`http://localhost:3000/to-do-page/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',  // Prevent caching
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // Jei naudojate token'ą, kad autentifikuotumėte vartotoją
+      },
+    });
+  
+    if (response.ok) {
+      const todos = await response.json();
+      console.log(todos); // Patikrinkite duomenis
+      setTasks(todos); // Atnaujinkite būseną su gautais to-dos
+    } else {
+      console.error('Failed to fetch todos', response.status);
+    }
   }
   
   async function handleDelete(id) {

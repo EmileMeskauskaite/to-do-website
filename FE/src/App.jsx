@@ -1,21 +1,15 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, useNavigate } from 'react-router-dom';
-import Mainpage from './pages/Mainpage'
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Mainpage from './pages/Mainpage';
 import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
-  let navigate = useNavigate();
-
-  useEffect(() => {
-    navigate('/main-page');
-  }, [navigate]);
-
   return (
     <Router>
-      <Route path="/main-page" element={<Mainpage />} />
+      <Routes>
+        <Route path="/" element={<Navigate to="/main-page" />} />
+        <Route path="/main-page" element={<Mainpage />} />
+      </Routes>
     </Router>
   );
 }

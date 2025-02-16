@@ -1,36 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ToDoList from './ToDoList';
-import { useLocation,Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function ToDoPage() {
   const [tasks, setTasks] = useState([]);
-  const [title, setTitle] = useState('');
+  const [task, settask] = useState('');
   const [description, setDescription] = useState('');
-
-  const location = useLocation();
-  const userId = location.state.userId;
+  
+  const userId = localStorage.getItem('userId');  // Get the userId from localStorage
+  console.log(userId);
+  // Ensure userId is available, if not redirect to login page
+  useEffect(() => {
+    if (!userId) {
+      window.location.href = "/login-page"; // Redirect to login if no userId found in localStorage
+    }
+  }, [userId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
-
+    if (!task.trim() || !description.trim()) return;
+  
     const response = await fetch('http://localhost:3000/create_todo', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ title, description, userId })
-
+      body: JSON.stringify({ task, description, userId })
     });
-
+  
     if (response.ok) {
       const newTask = await response.json();
       setTasks([...tasks, newTask]);
-
-      setTitle('');
+  
+      settask('');
       setDescription('');
     }
   };
+  console.log({ task, description, userId });
+  
 
   return (
     <div className="container mt-5">
@@ -40,12 +47,23 @@ export default function ToDoPage() {
           {/* Form for adding tasks */}
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label htmlFor="title" className="form-label">Title</label>
-              <input type="text" className="form-control" id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <label htmlFor="task" className="form-label">task</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="task" 
+                value={task} 
+                onChange={(e) => settask(e.target.value)} 
+              />
             </div>
             <div className="mb-3">
               <label htmlFor="description" className="form-label">Description</label>
-              <textarea className="form-control" id="description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
+              <textarea 
+                className="form-control" 
+                id="description" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+              ></textarea>
             </div>
             <button type="submit" className="btn btn-primary">Add Task</button>
           </form>

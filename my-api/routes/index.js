@@ -1,9 +1,9 @@
 var express = require('express');
 var router = express.Router();
-let sqlite3 = require('sqlite3').verbose();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 router.get('/', function(req, res, next) {
   db.all(`SELECT * FROM todolist`, [], function(err, rows) {
@@ -14,36 +14,69 @@ router.get('/', function(req, res, next) {
     res.json(rows);
   });
 });
-router.get('/to-do-page/:id', function(req, res, next) {
-  let db = new sqlite3.Database('./database.db');
-  let userId = req.params.id;
+router.get('/to-do-page/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
 
-  db.all(`SELECT * FROM todolist WHERE user_id = ?`, [userId], function(err, rows) {
-    if (err) {
-      return console.log(err.message);
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
     }
-    res.json(rows);
-    db.close();
-  });
+
+    // Paverskite userId į MongoDB ObjectId
+    const objectId = new mongoose.Types.ObjectId(userId); // Pakeistas 'new' operatorius
+
+    // Paimame vartotoją pagal userId
+    const user = await User.findOne({ _id: objectId });
+
+    // Jei vartotojas nerastas
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Grąžinkite užduotis, kurios yra vartotojo dokumente
+    res.json(user.tasks);  // Užduotys yra tiesiogiai vartotojo dokumente
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ error: 'Failed to fetch to-do items' });
+  }
 });
 
 router.post('/create_todo', async (req, res) => {
   try {
-    console.log(req.body);
-    const user = await User.findById(req.body.userId);
-    user.tasks.push(req.body);
-    await user.save();
-    res.json({ message: 'Todo created successfully' });
+    const { userId, task, description, status } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+
+    // Sukurkite užduotį
+    const newTask = {
+      task,
+      description,
+      status
+    };
+
+    // Pridėkite užduotį į vartotojo tasks masyvą
+    user.tasks.push(newTask);
+
+    await user.save();  // Išsaugokite vartotojo dokumentą su nauja užduotimi
+    res.status(201).json({ message: 'Task created successfully', task: newTask });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to create todo' });
+    res.status(500).json({ error: 'Failed to create task' });
   }
 });
-
 router.post('/register', async (req, res) => {
   try {
-    const user = new User(req.body);
+    const { username, password } = req.body;
+    
+    // Sukuriame vartotoją su paprastu slaptažodžiu
+    const user = new User({ username, password });
+
     await user.save();
+
     res.json({ message: 'User created successfully' });
   } catch (err) {
     console.error(err);
@@ -51,24 +84,33 @@ router.post('/register', async (req, res) => {
   }
 });
 
-let secretKey = crypto.randomBytes(32).toString('hex');
-
 
 router.post('/login', async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.body.username, password: req.body.password });
+    const { username, password } = req.body;
+
+    // Ieškome vartotojo pagal username
+    const user = await User.findOne({ username });
     if (!user) {
+      return res.status(400).json({ error: 'Invalid username or password' });
+    }
+
+    // Patikriname, ar slaptažodis atitinka
+    if (password === user.password) {
+      res.json({
+        message: 'Login successful',
+        user: { _id: user._id, username: user.username }
+      });
+    } else {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
-    const token = jwt.sign({ id: user._id }, 'secretKey', { expiresIn: '1h' });
-    user.token = token;
-    await user.save();
-    res.json({ user, token });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to authenticate user' });
+    return res.status(500).json({ error: 'Login failed' });
   }
 });
+
+
 
 function verifyToken(req, res, next) {
   let token =  req.headers['x-access-token'] || req.headers['authorization'];
