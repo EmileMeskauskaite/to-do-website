@@ -5,7 +5,18 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require("cors");
 
+const mongoose = require('mongoose');
 const sqlite3 = require('sqlite3').verbose();
+
+
+mongoose.connect('mongodb://localhost:27017/todoapp', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('Failed to connect to MongoDB', err);
+});
 
 let db = new sqlite3.Database('./database.db', (err) => {
   if (err) {

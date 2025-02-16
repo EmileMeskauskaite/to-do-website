@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 let sqlite3 = require('sqlite3').verbose();
+const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -26,69 +27,47 @@ router.get('/to-do-page/:id', function(req, res, next) {
   });
 });
 
-router.post('/create_todo', function(req, res, next) { 
-  let sqlite3 = require('sqlite3').verbose();
-  let db = new sqlite3.Database('./database.db');
-
-  let userId = req.body.userId; 
-  console.log(userId);
-
-  let title = req.body.title;
-  let description = req.body.description;
-
-  db.run('INSERT INTO todolist(user_id, task, description) VALUES(?, ?, ?)', [userId, title, description], function(err) {
-    db.close();
-
-    if (err) {
-      return console.log(err.message);
-    }
-
+router.post('/create_todo', async (req, res) => {
+  try {
+    console.log(req.body);
+    const user = await User.findById(req.body.userId);
+    user.tasks.push(req.body);
+    await user.save();
     res.json({ message: 'Todo created successfully' });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create todo' });
+  }
 });
 
-router.post('/register', function(req, res, next) {
-  let db = new sqlite3.Database('./database.db');
-  let user = req.body;
-
-  db.run(`INSERT INTO users(username, password, email, full_name) VALUES(?, ?, ?, ?)`, [user.username, user.password, user.email, user.fullName], function(err) {
-    if (err) {
-      return console.log(err.message);
-    }
-    console.log(`A row has been inserted with rowid ${this.lastID}`);
+router.post('/register', async (req, res) => {
+  try {
+    const user = new User(req.body);
+    await user.save();
     res.json({ message: 'User created successfully' });
-    db.close();
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
 });
-
-
 
 let secretKey = crypto.randomBytes(32).toString('hex');
 
-router.post('/login', function(req, res, next) {
-  let user = req.body;
-  let db = new sqlite3.Database('./database.db');
 
-  db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [user.username, user.password], function(err, row) {
-    if (err) {
-      console.log(err.message);
-      return res.status(500).json({ error: 'Database error' });
-    }
-
-    if (!row) {
+router.post('/login', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.body.username, password: req.body.password });
+    if (!user) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
-
-    let payload = {
-      id: row.id,
-      username: row.username
-    };
-
-    let token = jwt.sign(payload, secretKey, { expiresIn: '1h' });
-
-    res.json({ user: payload, token: token });
-    db.close();
-  });
+    const token = jwt.sign({ id: user._id }, 'secretKey', { expiresIn: '1h' });
+    user.token = token;
+    await user.save();
+    res.json({ user, token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to authenticate user' });
+  }
 });
 
 function verifyToken(req, res, next) {
